@@ -1,0 +1,46 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform_plan:
+    runs-on: ubuntu-latest
+    name: Terraform Plan
+    env:
+      WORKDIR: ${{ vars.WORKDIR }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Install "yq"
+      run: |
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+
+    - name: Get All Modified Files
+      id: changed-files
+      uses: tj-actions/changed-files@v35
+
+    - name: Touch All Modified Files
+      run: bash scripts/touch.sh
+      env:
+        FILES: ${{ steps.changed-files.outputs.all_modified_files }}
+
+    - name: Generate Makefile
+      run: bash scripts/build.sh
+    
+    - name: Terraform Plan
+      run: make -f tfmake/makefiles/plan/Makefile
+
+    - name: Mermaid Diagram
+      run: bash scripts/mermaid.sh
+      env:
+        CLASS_DEF_DEFAULT: ${{ vars.CLASS_DEF_DEFAULT }}
+        CLASS_DEF_VISITED: ${{ vars.CLASS_DEF_VISITED }}
+
+    - name: Terraform Outputs
+      run: bash scripts/plan_logs.sh
