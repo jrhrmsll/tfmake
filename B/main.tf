@@ -18,3 +18,7 @@ resource "random_id" "id" {
 output "id" {
   value = random_id.id.id
 }
+
+output "content" {
+  value = local.content
+}
